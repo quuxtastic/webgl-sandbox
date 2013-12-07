@@ -81,14 +81,46 @@ window.glutil =
         prog.color = gl.getAttribLocation prog, "color"
         gl.enableVertexAttribArray prog.color
 
+        prog.texcoord = gl.getAttribLocation prog, "texcoord"
+        gl.enableVertexAttribArray prog.texcoord
+
         prog.projection_matrix_uni = gl.getUniformLocation prog, "u_proj_matrix"
         prog.modelview_matrix_uni = gl.getUniformLocation prog, "u_modelview_matrix"
+
+        prog.sampler_uni = gl.getUniformLocation prog, "u_sampler"
 
         prog.set_matrix_uniforms = (proj, modelview) ->
             gl.uniformMatrix4fv this.projection_matrix_uni, false, proj
             gl.uniformMatrix4fv this.modelview_matrix_uni, false, modelview
 
         return prog
+
+    load_texture: (filename) ->
+        if not gl
+            console.error "WebGL not initialized"
+            return null
+
+        texture = gl.createTexture()
+        texture.image = new Image()
+        texture.image.onload = ->
+            gl.bindTexture gl.TEXTURE_2D, texture
+
+            gl.pixelStorei gl.UNPACK_FLIP_Y_WEBGL, true
+            gl.texImage2D gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image
+
+            gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST
+            gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST
+
+            gl.bindTexture gl.TEXTURE_2D, null
+
+        texture.bind = (shader) ->
+            gl.activeTexture gl.TEXTURE0
+            gl.bindTexture gl.TEXTURE_2D, this
+            gl.uniform1i shader.sampler_uni, 0
+
+        texture.image.src = filename
+
+        return texture
 
     make_buf: (layout, size, vertices) ->
         if not gl

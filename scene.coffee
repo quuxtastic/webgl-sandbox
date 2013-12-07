@@ -30,8 +30,6 @@ $ ->
             0.5, 0.5, 1.0, 1.0,
             0.5, 0.5, 1.0, 1.0
         ]
-    ###
-
 
     pyramid = glutil.make_buf 'list', 3, [
             0.0, 1.0, 0.0,
@@ -67,7 +65,6 @@ $ ->
             0.0, 0.0, 1.0, 1.0,
             0.0, 1.0, 0.0, 1.0
         ]
-    ###
     cube = glutil.make_buf 'list', 3, [
             -1.0, -1.0, 1.0,
             1.0, -1.0, 1.0,
@@ -149,15 +146,22 @@ $ ->
             success: (result) ->
                 model = result
 
-        model.vertex_buf = glutil.make_buf 'list', 3, model.vertices
-        model.color_buf = glutil.make_buf 'list', 4, model.colors
-        model.index_buf = glutil.make_index_buf model.indices
+        vertex_buf = glutil.make_buf 'list', 3, model.vertices
+        color_buf = glutil.make_buf 'list', 4, model.colors
+        texcoord_buf = glutil.make_buf 'list', 2, model.texcoords
+        index_buf = glutil.make_index_buf model.indices
+
+        texture = glutil.load_texture model.texture
 
         model.draw = (shader) ->
-            this.vertex_buf.bind shader.vertex
-            this.color_buf.bind shader.color
-            this.index_buf.bind()
-            this.index_buf.draw()
+            vertex_buf.bind shader.vertex
+            #color_buf.bind shader.color
+            texcoord_buf.bind shader.texcoord
+
+            texture.bind shader
+
+            index_buf.bind()
+            index_buf.draw()
 
         return model
 
@@ -180,15 +184,22 @@ $ ->
 
     degToRad = (d) -> d * Math.PI / 180
 
-    triangle_rotation = 0
-    square_rotation = 0
+    #triangle_rotation = 0
+    #square_rotation = 0
+    x_rot = 0
+    y_rot = 0
+    z_rot = 0
     last_time = new Date().getTime()
     animate = ->
         now = new Date().getTime()
 
         elapsed = now - last_time
-        triangle_rotation += (90*elapsed) / 1000.0
-        square_rotation += (75*elapsed) / 1000.0
+        #triangle_rotation += (90*elapsed) / 1000.0
+        #square_rotation += (75*elapsed) / 1000.0
+
+        x_rot += (90*elapsed) / 1000.0
+        y_rot += (90*elapsed) / 1000.0
+        z_rot += (90*elapsed) / 1000.0
 
         last_time = now
 
@@ -201,27 +212,31 @@ $ ->
         mat4.identity modelview_matrix
 
         #mat4.translate modelview_matrix, [-1.5, 0.0, -7.0]
-        mat4.translate modelview_matrix, [-1.0, 0.0, -8.0]
+        #mat4.translate modelview_matrix, [-1.0, 0.0, -8.0]
 
-        push_matrix()
-        mat4.rotate modelview_matrix, degToRad(triangle_rotation), [0, 1, 0]
+        #push_matrix()
+        #mat4.rotate modelview_matrix, degToRad(triangle_rotation), [0, 1, 0]
 
-        shaderprog.set_matrix_uniforms proj_matrix, modelview_matrix
+        #shaderprog.set_matrix_uniforms proj_matrix, modelview_matrix
         #triangle.bind shaderprog.vertex
         #triangle_colors.bind shaderprog.color
-        pyramid.bind shaderprog.vertex
-        pyramid_colors.bind shaderprog.color
+        #pyramid.bind shaderprog.vertex
+        #pyramid_colors.bind shaderprog.color
 
         #triangle.draw()
-        pyramid.draw()
+        #pyramid.draw()
 
-        pop_matrix()
+        #pop_matrix()
 
-        mat4.translate modelview_matrix, [3.0, 0.0, 0.0]
+        mat4.translate modelview_matrix, [0.0, 0.0, -5.0]
 
-        push_matrix()
+        mat4.rotate modelview_matrix, degToRad(x_rot), [1,0,0]
+        mat4.rotate modelview_matrix, degToRad(y_rot), [0,1,0]
+        mat4.rotate modelview_matrix, degToRad(z_rot), [0,0,1]
+
+        #push_matrix()
         #mat4.rotate modelview_matrix, degToRad(square_rotation), [1, 0, 0]
-        mat4.rotate modelview_matrix, degToRad(square_rotation), [1,1,1]
+        #mat4.rotate modelview_matrix, degToRad(square_rotation), [1,1,1]
 
         shaderprog.set_matrix_uniforms proj_matrix, modelview_matrix
         #square.bind shaderprog.vertex
@@ -236,7 +251,7 @@ $ ->
 
         cube.draw shaderprog
 
-        pop_matrix()
+        #pop_matrix()
 
     (frame = ->
         requestAnimationFrame frame
